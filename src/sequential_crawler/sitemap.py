@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
-from src.logger import logger
+from src.config import logger
 
 
 def build_xml_tree(node):

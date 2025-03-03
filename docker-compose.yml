@@ -1,23 +1,31 @@
-version: "3.9"
-
 services:
-  web:
-    build: .
-    ports:
-      - "8000:8000"
-    depends_on:
-      - redis
-    restart: always
-
   redis:
     image: "redis:alpine"
     restart: always
     ports:
       - "6379:6379"
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_started
+    restart: always
+    command: [ "/app/start.sh", "server" ]
 
   worker:
     build: .
-    command: ["celery", "-A", "src.tasks.celery_app", "worker", "--loglevel=info"]
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     restart: always
+    command: [ "/app/start.sh", "celery" ]
